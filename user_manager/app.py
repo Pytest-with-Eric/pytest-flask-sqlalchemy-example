@@ -1,9 +1,22 @@
 import os
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///example.db"  # For development
+
+# Get Postgres Environment Variables
+POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+
+# Get database URI from environment variable or use default
+DATABASE_URI = os.getenv("DATABASE_URI", "sqlite:///./prod_db.db")
+print("Using database URI:", DATABASE_URI)
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -11,8 +24,8 @@ db = SQLAlchemy(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(80), unique=False, nullable=False)
+    email = db.Column(db.String(120), unique=False, nullable=False)
 
     def __repr__(self):
         return f"<User {self.username}>"
@@ -21,12 +34,15 @@ class User(db.Model):
 @app.route("/users", methods=["GET"])
 def get_users():
     users = User.query.all()
-    return jsonify(
-        [
-            {"id": user.id, "username": user.username, "email": user.email}
-            for user in users
-        ]
-    ), 200
+    return (
+        jsonify(
+            [
+                {"id": user.id, "username": user.username, "email": user.email}
+                for user in users
+            ]
+        ),
+        200,
+    )
 
 
 @app.route("/users", methods=["POST"])
