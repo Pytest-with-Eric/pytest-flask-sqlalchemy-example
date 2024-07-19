@@ -16,6 +16,13 @@ python-dotenv = "^1.0.1"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 
+[tool.pytest.ini_options]
+addopts = [
+    "--dburl=postgresql://myuser:mypassword@localhost:5433/mydatabase_test",
+    "-v",
+    "-s",
+]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
