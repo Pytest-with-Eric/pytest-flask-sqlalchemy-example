@@ -1,11 +1,10 @@
 import pytest
-import os
-import tempfile
+import random
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError as SQLAlchemyOperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.pool import StaticPool
-from user_manager.app import app, db
+from user_manager.app import create_app, db
 
 
 def pytest_addoption(parser):
@@ -15,6 +14,12 @@ def pytest_addoption(parser):
         default="sqlite:///:memory:",  # Default uses SQLite in-memory database
         help="Database URL to use for tests.",
     )
+
+
+@pytest.fixture(scope="session")
+def db_url(request):
+    """Fixture to retrieve the database URL."""
+    return request.config.getoption("--dburl")
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -37,50 +42,46 @@ def pytest_sessionstart(session):
 
 
 @pytest.fixture(scope="session")
-def db_url(request):
-    """Fixture to retrieve the database URL."""
-    return request.config.getoption("--dburl")
+def app(db_url):
+    """Session-wide test 'app' fixture."""
+    test_config = {
+        "SQLALCHEMY_DATABASE_URI": db_url,
+        "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+    }
+    app = create_app(test_config)
+
+    with app.app_context():
+        db.create_all()
+        yield app
 
 
-# @pytest.fixture(scope="module")
-# def test_client(db_url):
-#     app.config["TESTING"] = True
-#     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+@pytest.fixture(scope="function")
+def session(app):
+    """Creates a new database session for a test."""
+    connection = db.engine.connect()
+    transaction = connection.begin()
 
-#     with app.test_client() as client:
-#         with app.app_context():
-#             db.create_all()
-#         yield client
+    options = dict(bind=connection, binds={})
+    session = db.create_scoped_session(options=options)
 
-#     with app.app_context():
-#         db.drop_all()
+    db.session = session
 
+    yield session
 
-# @pytest.fixture
-# def test_client():
-#     db_fd, app.config["DATABASE"] = tempfile.mkstemp()
-#     app.config["TESTING"] = True
-
-#     with app.test_client() as client:
-#         with app.app_context():
-#             db.create_all()
-#         yield client
-
-#     os.close(db_fd)
-#     os.unlink(app.config["DATABASE"])
+    transaction.rollback()  # Rollback any changes made during the test
+    connection.close()
 
 
 @pytest.fixture
-def test_client(db_url):
-    app.config["DATABASE"] = db_url
-    app.config["TESTING"] = True
-
-    with app.test_client() as client:
-        with app.app_context():
-            db.create_all()
-        yield client
+def test_client(app, session):
+    """Test client for the app."""
+    return app.test_client()
 
 
 @pytest.fixture
 def user_payload():
-    return {"username": "JohnDoe", "email": "john@doe.com"}
+    suffix = random.randint(1, 100)
+    return {
+        "username": f"JohnDoe_{suffix}",
+        "email": f"john_{suffix}@doe.com",
+    }
