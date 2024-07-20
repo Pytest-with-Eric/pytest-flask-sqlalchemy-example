@@ -4,7 +4,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError as SQLAlchemyOperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.pool import StaticPool
-from user_manager.app import create_app, db
+from user_manager.app import create_app
+from user_manager.models import db
 
 
 def pytest_addoption(parser):
@@ -33,7 +34,8 @@ def pytest_sessionstart(session):
         )
         connection = engine.connect()
         connection.close()  # Close the connection right after a successful connect.
-        print("Database connection successful........")
+        print("Using Database URL:", db_url)
+        print("Database connection successful.....")
     except SQLAlchemyOperationalError as e:
         print(f"Failed to connect to the database at {db_url}: {e}")
         pytest.exit(
@@ -54,26 +56,13 @@ def app(db_url):
         db.create_all()
         yield app
 
-
-@pytest.fixture(scope="function")
-def session(app):
-    """Creates a new database session for a test."""
-    connection = db.engine.connect()
-    transaction = connection.begin()
-
-    options = dict(bind=connection, binds={})
-    session = db.create_scoped_session(options=options)
-
-    db.session = session
-
-    yield session
-
-    transaction.rollback()  # Rollback any changes made during the test
-    connection.close()
+        # Close the database session and drop all tables after the session
+        db.session.remove()
+        db.drop_all()
 
 
 @pytest.fixture
-def test_client(app, session):
+def test_client(app):
     """Test client for the app."""
     return app.test_client()
 

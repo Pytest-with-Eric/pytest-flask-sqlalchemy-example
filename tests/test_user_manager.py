@@ -14,3 +14,4 @@ def test_add_user(test_client, user_payload):
 
     read_response_json = json.loads(response.data)
     print(read_response_json)
+    assert len(read_response_json) == 1

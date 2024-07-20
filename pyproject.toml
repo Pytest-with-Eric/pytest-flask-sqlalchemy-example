@@ -15,10 +15,11 @@ python-dotenv = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
+pytest-mock = "^3.14.0"
 
 [tool.pytest.ini_options]
 addopts = [
-    "--dburl=postgresql://myuser:mypassword@localhost:5433/mydatabase_test",
+    # "--dburl=postgresql://myuser:mypassword@localhost:5433/mydatabase_test",
     "-v",
     "-s",
 ]
