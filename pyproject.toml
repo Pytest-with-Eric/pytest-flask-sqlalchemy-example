@@ -19,7 +19,7 @@ pytest-mock = "^3.14.0"
 
 [tool.pytest.ini_options]
 addopts = [
-    # "--dburl=postgresql://myuser:mypassword@localhost:5433/mydatabase_test",
+    "--dburl=postgresql://myuser:mypassword@localhost:5433/mydatabase_test",
     "-v",
     "-s",
 ]

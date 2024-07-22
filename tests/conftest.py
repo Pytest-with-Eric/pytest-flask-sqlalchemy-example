@@ -2,7 +2,6 @@ import pytest
 import random
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError as SQLAlchemyOperationalError
-from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.pool import StaticPool
 from user_manager.app import create_app
 from user_manager.models import db
