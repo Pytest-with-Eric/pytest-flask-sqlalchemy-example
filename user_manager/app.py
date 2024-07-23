@@ -1,7 +1,7 @@
 import os
 from flask import Flask, jsonify, request
 from dotenv import load_dotenv
-from .models import db, User
+from models import db, User
 
 
 def create_app(app_config=None):

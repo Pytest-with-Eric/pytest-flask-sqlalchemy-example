@@ -1,12 +1,12 @@
 import json
-from user_manager.models import User
+from models import User
 
 
 def test_add_user(test_client, user_payload, mocker):
     # Mock the add and commit operations
-    mock_session_add = mocker.patch("user_manager.app.db.session.add", autospec=True)
+    mock_session_add = mocker.patch("app.db.session.add", autospec=True)
     mock_session_commit = mocker.patch(
-        "user_manager.app.db.session.commit", autospec=True
+        "app.db.session.commit", autospec=True
     )
 
     # Simulate the POST request to add a user
@@ -22,7 +22,7 @@ def test_add_user(test_client, user_payload, mocker):
     mock_session_commit.assert_called_once()
 
     # Mock User.query to return a list containing a new User instance
-    mock_user_query = mocker.patch("user_manager.app.User.query")
+    mock_user_query = mocker.patch("app.User.query")
     expected_user_object = User(
         username=user_payload["username"], email=user_payload["email"]
     )

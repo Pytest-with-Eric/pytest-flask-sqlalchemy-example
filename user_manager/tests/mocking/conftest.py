@@ -1,7 +1,6 @@
 import pytest
 import random
-from user_manager.app import create_app
-from user_manager.models import db
+from app import create_app
 
 
 @pytest.fixture(scope="session")
